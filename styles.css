@@ -5,6 +5,7 @@ body {
     margin: 0;
     padding: 0;
     background-color: #f5f5f5;
+    padding-bottom: 60px; /* Space for footer */
 }
 
 /* Header */
@@ -27,16 +28,39 @@ main {
     padding: 2rem;
 }
 
-.intro {
+section {
     background-color: white;
     border-radius: 8px;
     padding: 2rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
 }
 
 h2 {
     color: #2c3e50;
     margin-top: 0;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 0.5rem;
+}
+
+/* Lists */
+ul {
+    padding-left: 1.5rem;
+}
+
+ul li {
+    margin-bottom: 0.5rem;
+    color: #34495e;
+}
+
+/* Sections */
+.how-it-works, .risks {
+    background-color: #fff;
+}
+
+.examples, .calculator {
+    background-color: #fcfcfc;
+    border: 2px dashed #ddd;
 }
 
 /* Footer */
