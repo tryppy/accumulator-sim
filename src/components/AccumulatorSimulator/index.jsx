@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, ResponsiveContainer } from 'recharts';
 import { Alert } from '@/components/ui/alert';
 import { ScenarioCard } from './ScenarioCard';
-import { NVDA_PRESETS, INITIAL_MARGIN, TRADING_DAYS, SHARES_PER_DAY, GEARING_RATIO } from './constants';
+import { TRADING_DAYS, SHARES_PER_DAY, GEARING_RATIO, INITIAL_MARGIN } from './constants';
 import { generateScenarios } from './utils';
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -23,40 +23,68 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 const AccumulatorSimulator = () => {
   const [currentPrice, setCurrentPrice] = useState(700);
-  const [selectedPreset, setSelectedPreset] = useState(0);
+  const [knockoutPercentage, setKnockoutPercentage] = useState(105);
+  const [guaranteePeriod, setGuaranteePeriod] = useState(19);
   const [simulationResult, setSimulationResult] = useState(null);
 
-  const strikePrice = NVDA_PRESETS[selectedPreset].strike * currentPrice / 100;
-  const knockoutPrice = NVDA_PRESETS[selectedPreset].ko * currentPrice / 100;
-  const guaranteePeriod = NVDA_PRESETS[selectedPreset].guarantee;
+  const strikePercentage = knockoutPercentage - 30; // Strike is usually ~30% below KO
+  const strikePrice = (strikePercentage * currentPrice) / 100;
+  const knockoutPrice = (knockoutPercentage * currentPrice) / 100;
 
-  const runSimulation = (presetIndex) => {
-    setSelectedPreset(presetIndex);
+  useEffect(() => {
+    runSimulation();
+  }, [currentPrice, knockoutPercentage, guaranteePeriod]);
+
+  const runSimulation = () => {
     setSimulationResult(generateScenarios(currentPrice, strikePrice, knockoutPrice, guaranteePeriod));
   };
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="bg-gray-800 rounded-lg shadow-lg p-6 mb-6 border border-gray-700">
-        <h1 className="text-2xl font-bold mb-4 text-gray-100">NVDA Accumulator Simulator</h1>
+        <h1 className="text-2xl font-bold mb-6 text-gray-100">NVDA Accumulator Simulator</h1>
         
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          {NVDA_PRESETS.map((preset, idx) => (
-            <button
-              key={idx}
-              onClick={() => runSimulation(idx)}
-              className={`p-3 rounded-lg transition-colors ${
-                selectedPreset === idx 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-700 hover:bg-gray-600 text-gray-100'
-              }`}
-            >
-              {preset.label}
-            </button>
-          ))}
+        <div className="grid grid-cols-1 gap-8 mb-6">
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-300">
+              Knock-out Percentage: {knockoutPercentage}%
+            </label>
+            <input
+              type="range"
+              min="105"
+              max="110"
+              step="0.5"
+              value={knockoutPercentage}
+              onChange={(e) => setKnockoutPercentage(Number(e.target.value))}
+              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+            />
+            <div className="flex justify-between text-xs text-gray-400 mt-1">
+              <span>105%</span>
+              <span>110%</span>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-300">
+              Guarantee Period: {guaranteePeriod} days
+            </label>
+            <input
+              type="range"
+              min="19"
+              max="39"
+              step="20"
+              value={guaranteePeriod}
+              onChange={(e) => setGuaranteePeriod(Number(e.target.value))}
+              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+            />
+            <div className="flex justify-between text-xs text-gray-400 mt-1">
+              <span>4 weeks (19 days)</span>
+              <span>8 weeks (39 days)</span>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-300">Current Price ($)</label>
             <input
@@ -67,31 +95,16 @@ const AccumulatorSimulator = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">Strike Price ($)</label>
-            <input
-              type="number"
-              value={strikePrice.toFixed(2)}
-              disabled
-              className="w-full p-2 border rounded bg-gray-600 border-gray-500 text-gray-300"
-            />
+            <label className="block text-sm font-medium mb-2 text-gray-300">Strike Price (${strikePrice.toFixed(2)})</label>
+            <div className="w-full p-2 border rounded bg-gray-600 border-gray-500 text-gray-300">
+              {strikePercentage.toFixed(2)}% of spot
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">Knock-out Price ($)</label>
-            <input
-              type="number"
-              value={knockoutPrice.toFixed(2)}
-              disabled
-              className="w-full p-2 border rounded bg-gray-600 border-gray-500 text-gray-300"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">Guaranteed Days</label>
-            <input
-              type="number"
-              value={guaranteePeriod}
-              disabled
-              className="w-full p-2 border rounded bg-gray-600 border-gray-500 text-gray-300"
-            />
+            <label className="block text-sm font-medium mb-2 text-gray-300">Knock-out Price (${knockoutPrice.toFixed(2)})</label>
+            <div className="w-full p-2 border rounded bg-gray-600 border-gray-500 text-gray-300">
+              {knockoutPercentage}% of spot
+            </div>
           </div>
         </div>
       </div>
@@ -102,9 +115,7 @@ const AccumulatorSimulator = () => {
             <h2 className="text-xl font-bold mb-4 text-gray-100">Price Simulation</h2>
             <div className="h-[600px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                >
+                <LineChart margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis 
                     dataKey="day"
@@ -177,7 +188,7 @@ const AccumulatorSimulator = () => {
             <h3 className="text-lg font-bold mb-4 text-gray-100">Risk Analysis</h3>
             <div className="space-y-4">
               <Alert className="bg-gray-700 border-red-500 text-gray-100">
-                <strong className="text-red-400">Knock-out Risk:</strong> Early termination if price reaches {NVDA_PRESETS[selectedPreset].ko}% 
+                <strong className="text-red-400">Knock-out Risk:</strong> Early termination if price reaches {knockoutPercentage}% 
                 of initial price (${knockoutPrice.toFixed(2)}). Minimum {guaranteePeriod * SHARES_PER_DAY} shares
                 guaranteed during initial {guaranteePeriod} days.
               </Alert>
